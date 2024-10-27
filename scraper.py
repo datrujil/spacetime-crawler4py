@@ -29,7 +29,7 @@ def extract_next_links(url, resp):
 
         # AF - determine if webpage is 'low information'
         word_minimum = 300 # arbitrary
-        webpage_text = soup.get_text().split
+        webpage_text = soup.get_text().split()
 
         if len(webpage_text) < word_minimum:
             pass
