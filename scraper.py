@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+from dateutil import parser
+from datetime import datetime, timedelta
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -24,7 +26,6 @@ def extract_next_links(url, resp):
     if (resp.status == 200):
         # Use BeautifulSoups HTML parser
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-
         # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
         for link in soup.find_all('a'):
             # Since soup returns a tuple, 'href' helps to just grab the URL itself
@@ -41,10 +42,44 @@ def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+
+    # AF - only add valid links to frontier as per assignment details
+    valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
+    # AF - other "invalid" queries
+    sharing = 'share='
+    actions = 'action='
+    calendar_one = 'ical=1'
+    calendar_two = 'outlook-ical=1'
+    calendar_three = 'post_type=tribe_events'
+    calendar_four = 'tribe-bar-date='
+    invalid_queries = [sharing, actions, calendar_one, calendar_two, calendar_three, calendar_four]
+
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        
+        # AF - only add valid links to frontier as per assignment details
+        link_to_be_examined = parsed.netloc
+        valid = False
+        for valid_link in valid_netlocs:
+            if valid_link in link_to_be_examined:
+                valid = True
+                break
+        if not valid:
+            return False
+
+         # AF - invalid if contains invalid queries (empirically determined)
+        link_to_be_examined = parsed.query
+        for other in invalid_queries:
+            if other in link_to_be_examined:
+                return False
+
+        # AF - url contains a fragment
+        link_to_be_examined = parsed.fragment
+        if bool(link_to_be_examined):
+            return False
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
