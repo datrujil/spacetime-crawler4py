@@ -19,7 +19,7 @@ def extract_next_links(url, resp):
 
     # Initialize empty list
     newURLs = []
-    
+
     # First, check if the status code is 200 so we know we can crawl it
     if (resp.status == 200):
         # Use BeautifulSoups HTML parser
