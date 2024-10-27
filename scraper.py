@@ -51,14 +51,23 @@ def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
-
     # AF - only add valid links to frontier as per assignment details
     valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
 
     # AF - whitelist (avoid these urls since they lead to calendars)
     wics = "https://wics.ics.uci.edu/events/category/"
     undergrad = "https://ics.uci.edu/events/category/undergraduate-programs"
-    whitelist = [wics, undergrad]
+    event = "/event"
+    other = "https://ngs.ics.uci.edu"
+    whitelist = [event, other]
+
+    # AF - errors in the domain
+    your_ip_one = "[YOUR_IP]"
+    your_ip_two = "YOUR_IP"
+    public_ip = "PUBLIC_IP"
+    local_host = "localhost"
+    aws_public_id = "[YOUR-AWS-PUBLIC-IP]"
+    invalid_domains = [your_ip_one, your_ip_two, public_ip, local_host, aws_public_id]
 
     # AF - other "invalid" queries
     sharing = 'share='
@@ -67,9 +76,19 @@ def is_valid(url):
     calendar_two = 'outlook-ical=1'
     calendar_three = 'post_type=tribe_events'
     calendar_four = 'tribe-bar-date='
-    invalid_queries = [sharing, actions, calendar_one, calendar_two, calendar_three, calendar_four]
+    filtering = "filter"
+    invalid_queries = [sharing, actions, calendar_one, calendar_two, calendar_three, calendar_four, filtering]
 
     try:
+        # AF - extraneous error, check first
+        if url is None:
+            return False
+
+        # AF - check for errors in the domain
+        for domain_error in invalid_domains:
+            if domain_error in url:
+                return False
+
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
