@@ -57,7 +57,8 @@ def is_valid(url):
 
     # AF - whitelist (avoid these urls since they lead to calendars)
     wics = "https://wics.ics.uci.edu/events/category/"
-    whitelist = [wics]
+    undergrad = "https://ics.uci.edu/events/category/undergraduate-programs"
+    whitelist = [wics, undergrad]
 
     # AF - other "invalid" queries
     sharing = 'share='
