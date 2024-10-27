@@ -26,15 +26,24 @@ def extract_next_links(url, resp):
     if (resp.status == 200):
         # Use BeautifulSoups HTML parser
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-        # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
-        for link in soup.find_all('a'):
-            # Since soup returns a tuple, 'href' helps to just grab the URL itself
-            url = link.get('href')
-            # Check if the url is valid with our given schema
-            if (is_valid(url)):
-                # If it is, add it to the list of URLs
-                # TODO: THIS WILL MESS UP, FIX ISVALID
-                newURLs.append(url)
+
+        # AF - determine if webpage is 'low information'
+        word_minimum = 300 # arbitrary
+        webpage_text = soup.get_text().split
+
+        if len(webpage_text) < word_minimum:
+            pass
+
+        else:
+            # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
+            for link in soup.find_all('a'):
+                # Since soup returns a tuple, 'href' helps to just grab the URL itself
+                url = link.get('href')
+                # Check if the url is valid with our given schema
+                if (is_valid(url)):
+                    # If it is, add it to the list of URLs
+                    # TODO: THIS WILL MESS UP, FIX ISVALID
+                    newURLs.append(url)
 
     return newURLs
 
@@ -45,6 +54,11 @@ def is_valid(url):
 
     # AF - only add valid links to frontier as per assignment details
     valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
+
+    # AF - whitelist (avoid these urls since they lead to calendars)
+    wics = "https://wics.ics.uci.edu/events/category/"
+    whitelist = [wics]
+
     # AF - other "invalid" queries
     sharing = 'share='
     actions = 'action='
@@ -59,6 +73,11 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]):
             return False
         
+        # AF - check whitelist (avoiding urls that lead to calendars)
+        for whitelisted_url in whitelist:
+            if whitelisted_url in url:
+                return False
+
         # AF - only add valid links to frontier as per assignment details
         link_to_be_examined = parsed.netloc
         valid = False
