@@ -1,7 +1,9 @@
 from threading import Thread
 from inspect import getsource
 from utils.download import download
+
 from utils.frequency import print_top_frequencies, write_top_frequencies
+
 from utils import get_logger
 import scraper
 import time
@@ -12,7 +14,9 @@ class Worker(Thread):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
         self.frontier = frontier
+
         self.frequencies = defaultdict(int)
+
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
         assert {getsource(scraper).find(req) for req in {"from urllib.request import", "import urllib.request"}} == {-1}, "Do not use urllib.request in scraper.py"
@@ -28,11 +32,13 @@ class Worker(Thread):
         try:
             counter = 0
             while True:
+
                 
                 # UNCOMMENT TO TEST
                 # if counter > 50:
                 #     print_top_frequencies(self.frequencies, top_n=50)
                 
+
                 tbd_url = self.frontier.get_tbd_url()
                 if not tbd_url:
                     self.logger.info("Frontier is empty. Stopping Crawler.")
@@ -44,11 +50,14 @@ class Worker(Thread):
                     f"using cache {self.config.cache_server}.")
     
                 # DT - Get scraped URLs and token frequencies
+
                 scraped_urls, page_frequencies = scraper.scraper(tbd_url, resp, file)
                 
+
                 # DT - Update the cumulative frequency dictionary
                 for word, freq in page_frequencies.items():
                     self.frequencies[word] += freq
+
 
                 urls_processed += 1
 
@@ -65,6 +74,7 @@ class Worker(Thread):
                 time.sleep(self.config.time_delay)
                 counter = counter + 1
         finally:
+
             file.close()
             results_file = f"crawled_analysis.txt"
             file = open(results_file, "a", encoding="utf-8")

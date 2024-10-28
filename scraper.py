@@ -64,6 +64,7 @@ def extract_next_links(url, resp, file):
         is_pdf = False
 
         try:
+
             if resp.raw_response.headers.get('Content-Type') == "application/pdf":
                 is_pdf = True
         except:
@@ -81,6 +82,7 @@ def extract_next_links(url, resp, file):
                     current_max[1] = url 
 
                 url_order += 1
+                
                 file.write(f"URL{url_order}: {url}\n{webpage_text}\n\n")
                 
                 # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
@@ -101,6 +103,7 @@ def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+
     # AF - only add valid links to frontier as per assignment details
     valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
 
@@ -122,7 +125,9 @@ def is_valid(url):
     ics_cat = "https://ics.uci.edu/events/category/"
     isg = "https://isg.ics.uci.edu/events/"
     py = ".py"
+
     whitelist = [ppsx, odc, wics, wics_cat, wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, other, py, pdf]
+
 
 
     # AF - errors in the domain
@@ -183,6 +188,7 @@ def is_valid(url):
         link_to_be_examined = parsed.fragment
         if bool(link_to_be_examined):
             return False
+
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
