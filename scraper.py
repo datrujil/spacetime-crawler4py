@@ -3,12 +3,38 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from dateutil import parser
 from datetime import datetime, timedelta
+from tokenizer.tokens import tokenize, computeWordFreq
+from collections import defaultdict
 
-current_max = (0, "");
+
+def processHTMLContent(html_content):
+    """ DT - 
+    Processes HTML content, extracts text, tokenizes, and returns a frequency dictionary.
+    :param html_content: HTML string to be processed.
+    :return: A dictionary with token frequencies for the HTML content.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    text_content = soup.get_text()
+    
+    tokens = tokenize(text_content)
+    return computeWordFreq(tokens)
+
+current_max = (0, "")
 
 def scraper(url, resp, file, url_order):
-    links = extract_next_links(url, resp, file, url_order)
-    return [link for link in links if is_valid(link)]
+    # DT - Check if the response is successful and contains HTML content
+    if resp.status == 200:
+        # DT - Extract valid links from the page
+        links = [link for link in extract_next_links(url, resp, file, url_order) if is_valid(link)]
+        
+        # DT - Process the HTML content and get token frequencies
+        frequencies = processHTMLContent(resp.raw_response.content)
+        
+        # DT - Return both the list of valid links and the frequency dictionary
+        return links, frequencies
+    
+    # DT - If the response is not valid, return empty links and frequencies
+    return [], defaultdict(int)
 
 def extract_next_links(url, resp, file, url_order):
     # Implementation required.
@@ -30,27 +56,30 @@ def extract_next_links(url, resp, file, url_order):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
         # AF - determine if webpage is 'low information'
-        word_minimum = 500
+        word_minimum = 200
         webpage_text = soup.get_text().split()
+        is_pdf = False
 
-        print(resp.raw_response.headers.get('Content-Type'))
-        
-        if len(webpage_text) < word_minimum:
+        try:
+            if resp.raw_response.headers.get('Content-Type') == "applications/pdf":
+                is_pdf == True
+        except:
             pass
-        elif str(resp.raw_response.headers.get('Content-Type')) != "text/html":
-            pass
-        else:
-            file.write(f"URL{url_order}: {url}\n{webpage_text}\n\n")
-            
-            # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
-            for link in soup.find_all('a'):
-                # Since soup returns a tuple, 'href' helps to just grab the URL itself
-                url = link.get('href')
-                # Check if the url is valid with our given schema
-                if (is_valid(url)):
-                    # If it is, add it to the list of URLs
-                    # TODO: THIS WILL MESS UP, FIX ISVALID
-                    newURLs.append(url)
+
+        if not is_pdf:
+            if len(webpage_text) < word_minimum:
+                pass
+            else:
+                file.write(f"URL{url_order}: {url}\n{webpage_text}\n\n")
+                
+                # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
+                for link in soup.find_all('a'):
+                    # Since soup returns a tuple, 'href' helps to just grab the URL itself
+                    url = link.get('href')
+                    # Check if the url is valid with our given schema
+                    if (is_valid(url)):
+                        # If it is, add it to the list of URLs
+                        newURLs.append(url)
 
     return newURLs
 
@@ -58,6 +87,7 @@ def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+
     # AF - only add valid links to frontier as per assignment details
     valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
 
@@ -75,7 +105,8 @@ def is_valid(url):
     ics_cat = "https://ics.uci.edu/events/category/"
     isg = "https://isg.ics.uci.edu/events/"
     py = ".py"
-    whitelist = [wics, wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, other, py]
+    pdf = ".pdf"
+    whitelist = [wics, wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, other, py, pdf]
 
 
     # AF - errors in the domain
@@ -135,6 +166,7 @@ def is_valid(url):
         link_to_be_examined = parsed.fragment
         if bool(link_to_be_examined):
             return False
+
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
