@@ -4,11 +4,13 @@ from bs4 import BeautifulSoup
 from dateutil import parser
 from datetime import datetime, timedelta
 
-def scraper(url, resp):
-    links = extract_next_links(url, resp)
+current_max = (0, "");
+
+def scraper(url, resp, file, url_order):
+    links = extract_next_links(url, resp, file, url_order)
     return [link for link in links if is_valid(link)]
 
-def extract_next_links(url, resp):
+def extract_next_links(url, resp, file, url_order):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -28,13 +30,18 @@ def extract_next_links(url, resp):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
         # AF - determine if webpage is 'low information'
-        word_minimum = 300 # arbitrary
+        word_minimum = 500
         webpage_text = soup.get_text().split()
 
+        print(resp.raw_response.headers.get('Content-Type'))
+        
         if len(webpage_text) < word_minimum:
             pass
-
+        elif str(resp.raw_response.headers.get('Content-Type')) != "text/html":
+            pass
         else:
+            file.write(f"URL{url_order}: {url}\n{webpage_text}\n\n")
+            
             # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
             for link in soup.find_all('a'):
                 # Since soup returns a tuple, 'href' helps to just grab the URL itself
@@ -55,11 +62,21 @@ def is_valid(url):
     valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
 
     # AF - whitelist (avoid these urls since they lead to calendars)
+    # AF - whitelist (avoid these urls since they lead to calendars)
     wics = "https://wics.ics.uci.edu/events/category/"
     undergrad = "https://ics.uci.edu/events/category/undergraduate-programs"
-    event = "/event"
     other = "https://ngs.ics.uci.edu"
-    whitelist = [event, other]
+
+    # DT - more trap hyperlinks
+    wics_events = "https://wics.ics.uci.edu/events/"
+    cecs = "https://www.cecs.uci.edu/events/"
+    cecs_list = "https://www.cecs.uci.edu/events/list"
+    ics_events = "https://ics.uci.edu/events/"
+    ics_cat = "https://ics.uci.edu/events/category/"
+    isg = "https://isg.ics.uci.edu/events/"
+    py = ".py"
+    whitelist = [wics, wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, other, py]
+
 
     # AF - errors in the domain
     your_ip_one = "[YOUR_IP]"

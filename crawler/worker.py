@@ -18,17 +18,40 @@ class Worker(Thread):
         super().__init__(daemon=True)
         
     def run(self):
-        while True:
-            tbd_url = self.frontier.get_tbd_url()
-            if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
-                break
-            resp = download(tbd_url, self.config, self.logger)
-            self.logger.info(
-                f"Downloaded {tbd_url}, status <{resp.status}>, "
-                f"using cache {self.config.cache_server}.")
-            scraped_urls = scraper.scraper(tbd_url, resp)
-            for scraped_url in scraped_urls:
-                self.frontier.add_url(scraped_url)
-            self.frontier.mark_url_complete(tbd_url)
-            time.sleep(self.config.time_delay)
+        url_order = 0
+        file_count = 1
+        urls_processed = 0
+    
+        output_file_path = f"crawled_content_{file_count}.txt"
+        file = open(output_file_path, "a", encoding="utf-8")
+    
+        try:
+            while True:
+                tbd_url = self.frontier.get_tbd_url()
+                if not tbd_url:
+                    self.logger.info("Frontier is empty. Stopping Crawler.")
+                    break
+    
+                resp = download(tbd_url, self.config, self.logger)
+                self.logger.info(
+                    f"Downloaded {tbd_url}, status <{resp.status}>, "
+                    f"using cache {self.config.cache_server}.")
+    
+                scraped_urls = scraper.scraper(tbd_url, resp, file, url_order)
+                url_order += 1
+                urls_processed += 1
+
+                if urls_processed >= 1000:
+                    file.close()
+                    file_count += 1
+                    urls_processed = 0
+                    output_file_path = f"crawled_content_{file_count}.txt"
+                    file = open(output_file_path, "a", encoding="utf-8")
+
+                for scraped_url in scraped_urls:
+                    self.frontier.add_url(scraped_url)
+                self.frontier.mark_url_complete(tbd_url)
+                time.sleep(self.config.time_delay)
+    
+        finally:
+            file.close()
