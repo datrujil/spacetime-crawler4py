@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from tokenizer.tokens import tokenize, computeWordFreq
 from collections import defaultdict
 
+url_order = 0
+current_max = [0, ""]
 
 def processHTMLContent(html_content):
     """ DT - 
@@ -18,14 +20,13 @@ def processHTMLContent(html_content):
     
     tokens = tokenize(text_content)
     return computeWordFreq(tokens)
+    current_max = (0, "")
 
-current_max = (0, "")
-
-def scraper(url, resp, file, url_order):
+def scraper(url, resp, file):
     # DT - Check if the response is successful and contains HTML content
     if resp.status == 200:
         # DT - Extract valid links from the page
-        links = [link for link in extract_next_links(url, resp, file, url_order) if is_valid(link)]
+        links = [link for link in extract_next_links(url, resp, file) if is_valid(link)]
         
         # DT - Process the HTML content and get token frequencies
         frequencies = processHTMLContent(resp.raw_response.content)
@@ -36,17 +37,19 @@ def scraper(url, resp, file, url_order):
     # DT - If the response is not valid, return empty links and frequencies
     return [], defaultdict(int)
 
-def extract_next_links(url, resp, file, url_order):
+def extract_next_links(url, resp, file):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
     # resp.error: when status is not 200, you can check the error here, if needed.
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
-    #         resp.raw_response.url: the url, again
+    #         resp.raw_response.url: the urlnot  again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
+    global url_order
+    
     # Initialize empty list
     newURLs = []
 
@@ -61,26 +64,39 @@ def extract_next_links(url, resp, file, url_order):
         is_pdf = False
 
         try:
-            if resp.raw_response.headers.get('Content-Type') == "applications/pdf":
-                is_pdf == True
+
+            if resp.raw_response.headers.get('Content-Type') == "application/pdf":
+                is_pdf = True
         except:
             pass
-
         if not is_pdf:
             if len(webpage_text) < word_minimum:
                 pass
+            elif resp.raw_response.headers.get('Content-Type') == "image/jpeg":
+                pass
             else:
+                global current_max
+                
+                if len(webpage_text) > current_max[0]:
+                    current_max[0] = len(webpage_text)
+                    current_max[1] = url 
+
+                url_order += 1
+                
                 file.write(f"URL{url_order}: {url}\n{webpage_text}\n\n")
                 
                 # Finds all links within the HTML, searching for all 'a' tags which are the hyperlink tags
                 for link in soup.find_all('a'):
+                    
                     # Since soup returns a tuple, 'href' helps to just grab the URL itself
                     url = link.get('href')
                     # Check if the url is valid with our given schema
                     if (is_valid(url)):
+                        
                         # If it is, add it to the list of URLs
                         newURLs.append(url)
-
+    
+                        parsed_url = urlparse(url)
     return newURLs
 
 def is_valid(url):
@@ -93,9 +109,13 @@ def is_valid(url):
 
     # AF - whitelist (avoid these urls since they lead to calendars)
     # AF - whitelist (avoid these urls since they lead to calendars)
-    wics = "https://wics.ics.uci.edu/events/category/"
+    wics_cat = "https://wics.ics.uci.edu/events/category/"
+    wics = "/wics"
     undergrad = "https://ics.uci.edu/events/category/undergraduate-programs"
     other = "https://ngs.ics.uci.edu"
+    pdf = "/pdf"
+    ppsx = ".ppsx"
+    odc = ".odc"
 
     # DT - more trap hyperlinks
     wics_events = "https://wics.ics.uci.edu/events/"
@@ -105,8 +125,9 @@ def is_valid(url):
     ics_cat = "https://ics.uci.edu/events/category/"
     isg = "https://isg.ics.uci.edu/events/"
     py = ".py"
-    pdf = ".pdf"
-    whitelist = [wics, wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, other, py, pdf]
+
+    whitelist = [ppsx, odc, wics, wics_cat, wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, other, py, pdf]
+
 
 
     # AF - errors in the domain
@@ -128,6 +149,7 @@ def is_valid(url):
     invalid_queries = [sharing, actions, calendar_one, calendar_two, calendar_three, calendar_four, filtering]
 
     try:
+        
         # AF - extraneous error, check first
         if url is None:
             return False

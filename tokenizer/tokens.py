@@ -41,7 +41,6 @@ def tokenize(text):
 def computeWordFreq(token_list):
     """
     Purpose: Takes a list of tokens as an argument and returns a frequency dictionary.
-
     :param token_list: The list of tokens
     :return: A default dictionary where 'key' is the token and 'value' is the occurrences
     """
