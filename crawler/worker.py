@@ -33,12 +33,6 @@ class Worker(Thread):
             counter = 0
             while True:
 
-                
-                # UNCOMMENT TO TEST
-                # if counter > 50:
-                #     print_top_frequencies(self.frequencies, top_n=50)
-                
-
                 tbd_url = self.frontier.get_tbd_url()
                 if not tbd_url:
                     self.logger.info("Frontier is empty. Stopping Crawler.")
@@ -50,14 +44,7 @@ class Worker(Thread):
                     f"using cache {self.config.cache_server}.")
     
                 # DT - Get scraped URLs and token frequencies
-
-                scraped_urls, page_frequencies = scraper.scraper(tbd_url, resp, file)
-                
-
-                # DT - Update the cumulative frequency dictionary
-                for word, freq in page_frequencies.items():
-                    self.frequencies[word] += freq
-
+                scraped_urls = scraper.scraper(tbd_url, resp, file)
 
                 urls_processed += 1
 
@@ -79,8 +66,4 @@ class Worker(Thread):
             results_file = f"crawled_analysis.txt"
             file = open(results_file, "a", encoding="utf-8")
             file.write(f"Insert Domain Dict\nMax words : URL -> {scraper.current_max}\nInsert Unique URL Count\n")
-            file.close()
-            results_file = f"top_50_tokens.txt"
-            file = open(results_file, "a", encoding="utf-8")
-            write_top_frequencies(self.frequencies, file)
             file.close()
