@@ -2,20 +2,16 @@ from threading import Thread
 from inspect import getsource
 from utils.download import download
 
-from utils.frequency import print_top_frequencies, write_top_frequencies
 
 from utils import get_logger
 import scraper
 import time
-from collections import defaultdict
 
 class Worker(Thread):
     def __init__(self, worker_id, config, frontier):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
         self.frontier = frontier
-
-        self.frequencies = defaultdict(int)
 
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
@@ -30,7 +26,7 @@ class Worker(Thread):
         file = open(output_file_path, "a", encoding="utf-8")
     
         try:
-            counter = 0
+            #counter = 0
             while True:
 
                 tbd_url = self.frontier.get_tbd_url()
@@ -59,7 +55,7 @@ class Worker(Thread):
                     self.frontier.add_url(scraped_url)
                 self.frontier.mark_url_complete(tbd_url)
                 time.sleep(self.config.time_delay)
-                counter = counter + 1
+                #counter = counter + 1
         finally:
 
             file.close()
