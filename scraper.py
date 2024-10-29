@@ -48,34 +48,34 @@ def extract_next_links(url, resp, file):
     if resp.status != 200:
         return new_urls  # Return empty list if response is not successful
 
-        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-        content_type = resp.raw_response.headers.get('Content-Type', '').lower()
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    content_type = resp.raw_response.headers.get('Content-Type', '').lower()
         
-        # Check for low information or undesired content types
-        try:
-            if content_type == "application/pdf" or content_type == "image/jpeg":
-                return new_urls
-        except:
-            pass
-        
-        # Split webpage text content into words and check word count
-        webpage_text = soup.get_text().split()
-        if len(webpage_text) < word_minimum:
+    # Check for low information or undesired content types
+    try:
+        if content_type == "application/pdf" or content_type == "image/jpeg":
             return new_urls
+    except:
+        pass
         
-        # Update global max word count if this page has more text
-        if len(webpage_text) > current_max[0]:
-            current_max = (len(webpage_text), url)
+    # Split webpage text content into words and check word count
+    webpage_text = soup.get_text().split()
+    if len(webpage_text) < word_minimum:
+        return new_urls
         
-        # Log the page's URL and text content
-        url_order += 1
-        file.write(f"URL{url_order}: {url}\n{' '.join(webpage_text)}\n\n")
+    # Update global max word count if this page has more text
+    if len(webpage_text) > current_max[0]:
+        current_max = (len(webpage_text), url)
         
-        # Extract valid URLs from anchor tags
-        for link in soup.find_all('a', href=True):
-            link_url = link.get('href')
-            if is_valid(link_url):
-                new_urls.append(link_url)
+    # Log the page's URL and text content
+    url_order += 1
+    file.write(f"URL{url_order}: {url}\n{' '.join(webpage_text)}\n\n")
+        
+    # Extract valid URLs from anchor tags
+    for link in soup.find_all('a', href=True):
+        link_url = link.get('href')
+        if is_valid(link_url):
+            new_urls.append(link_url)
     
     return new_urls
 
@@ -110,7 +110,7 @@ def is_valid(url):
     ics_events = "https://ics.uci.edu/events/"
     ics_cat = "https://ics.uci.edu/events/category/"
     isg = "https://isg.ics.uci.edu/events/"
-    whitelist = [nb, ngs, ppsx, odc, wics_cat, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, other, py, pdf]
+    whitelist = [nb, ngs, ppsx, odc, wics_cat, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, py, pdf]
 
     # AF - errors in the domain
     your_ip_one = "[YOUR_IP]"
