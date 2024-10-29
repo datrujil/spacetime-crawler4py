@@ -1,34 +1,30 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-from dateutil import parser
-from datetime import datetime, timedelta
-from collections import defaultdict
 
 url_order = 0
 current_max = [0, ""]
 
 def scraper(url, resp, file):
     """
-    Purpose: Main scraping function that validates the response, processes HTML content, and returns valid links and token frequencies.
+    Purpose: Main scraping function that validates the response, processes HTML content, and returns valid links.
     Params:
         url: The URL of the web page being scraped.
         resp: The response object from the server, containing the status and raw HTML.
         file: File or logging object used for output or debugging purposes.
-    Returns: A tuple containing:
+    Returns:
         links: A list of valid URLs extracted from the page.
-        frequencies: A dictionary mapping tokens to their frequency counts in the page's content.
     """
     
-    # DT - Check if the response is successful and contains HTML content
+    # Check if the response is successful and contains HTML content
     if resp.status == 200:
-        # DT - Extract valid links from the page
+        # Extract valid links from the page
         links = [link for link in extract_next_links(url, resp, file) if is_valid(link)]
 
-        # DT - Return both the list of valid links and the frequency dictionary
+        # Return both the list of valid links and the frequency dictionary
         return links
     
-    # DT - If the response is not valid, return empty links and frequencies
+    # If the response is not valid, return empty links and frequencies
     return []
 
 def extract_next_links(url, resp, file):
@@ -44,33 +40,31 @@ def extract_next_links(url, resp, file):
     global url_order, current_max
     new_urls = []
     word_minimum = 200  # Minimum word count to consider page as 'high information'
-    
-    if resp.status != 200:
-        return new_urls  # Return empty list if response is not successful
+
 
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    content_type = resp.raw_response.headers.get('Content-Type', '').lower()
-        
+
     # Check for low information or undesired content types
     try:
+        content_type = resp.raw_response.headers.get('Content-Type', '').lower()
         if content_type == "application/pdf" or content_type == "image/jpeg":
             return new_urls
     except:
         pass
-        
+
     # Split webpage text content into words and check word count
     webpage_text = soup.get_text().split()
     if len(webpage_text) < word_minimum:
         return new_urls
-        
+
     # Update global max word count if this page has more text
     if len(webpage_text) > current_max[0]:
         current_max = (len(webpage_text), url)
-        
+
     # Log the page's URL and text content
     url_order += 1
     file.write(f"URL{url_order}: {url}\n{' '.join(webpage_text)}\n\n")
-        
+
     # Extract valid URLs from anchor tags
     for link in soup.find_all('a', href=True):
         link_url = link.get('href')
@@ -86,33 +80,33 @@ def is_valid(url):
         url: The URL to be evaluated for validity.
         Returns: True if the URL meets specified criteria for crawling; otherwise, False.
     Notes:
-        Utilizes a whitelist of valid domains specific to UCI-related sites.
+        Utilizes a blacklist of valid domains specific to UCI-related sites.
         Filters out URLs that lead to certain non-content pages, such as calendars.
     """
     
-    # AF - only add valid links to frontier as per assignment details
+    # only add valid links to frontier as per assignment details
     valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
 
-    # AF - whitelist (avoid these urls since they lead to calendars)
-    # AF - whitelist (avoid these urls since they lead to calendars)
-    wics_cat = "/wics.ics.uci.edu/events/category/"
+    # blacklist (traps)
+    wics_events = "/wics.ics.uci.edu/events"
     undergrad = "/ics.uci.edu/events/category/undergraduate-programs"
-    ngs = "/ngs.ics.uci.edu"
+    cecs = "https://www.cecs.uci.edu/events"
+    cecs_list = "https://www.cecs.uci.edu/events"
+    ics_events = "/ics.uci.edu/events"
+    ics_cat = "/ics.uci.edu/events"
+    isg = "/isg.ics.uci.edu/events"
+
+    # other problematic
     pdf = "/pdf"
     ppsx = ".ppsx"
     odc = ".odc"
     nb = ".nb"
     py = ".py"
-    
-    # DT - more trap hyperlinks
-    cecs = "https://www.cecs.uci.edu/events/"
-    cecs_list = "https://www.cecs.uci.edu/events/list"
-    ics_events = "https://ics.uci.edu/events/"
-    ics_cat = "https://ics.uci.edu/events/category/"
-    isg = "https://isg.ics.uci.edu/events/"
-    whitelist = [nb, ngs, ppsx, odc, wics_cat, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, py, pdf]
+    webp = ".webp"
 
-    # AF - errors in the domain
+    blacklist = [wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, pdf, ppsx, odc, nb, py, webp]
+
+    # errors in the domain
     your_ip_one = "[YOUR_IP]"
     your_ip_two = "YOUR_IP"
     public_ip = "PUBLIC_IP"
@@ -120,7 +114,7 @@ def is_valid(url):
     aws_public_id = "[YOUR-AWS-PUBLIC-IP]"
     invalid_domains = [your_ip_one, your_ip_two, public_ip, local_host, aws_public_id]
 
-    # AF - other "invalid" queries
+    # other "invalid" queries
     sharing = 'share='
     actions = 'action='
     calendar_one = 'ical=1'
@@ -132,11 +126,11 @@ def is_valid(url):
 
     try:
         
-        # AF - extraneous error, check first
+        # extraneous error, check first
         if url is None:
             return False
 
-        # AF - check for errors in the domain
+        # check for errors in the domain
         for domain_error in invalid_domains:
             if domain_error in url:
                 return False
@@ -145,12 +139,12 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]):
             return False
         
-        # AF - check whitelist (avoiding urls that lead to calendars)
-        for whitelisted_url in whitelist:
-            if whitelisted_url in url:
+        # check blacklist (avoiding urls that lead to calendars)
+        for blacklisted_url in blacklist:
+            if blacklisted_url in url:
                 return False
 
-        # AF - only add valid links to frontier as per assignment details
+        # only add valid links to frontier as per assignment details
         link_to_be_examined = parsed.netloc
         valid = False
         for valid_link in valid_netlocs:
@@ -160,13 +154,13 @@ def is_valid(url):
         if not valid:
             return False
     
-         # AF - invalid if contains invalid queries (empirically determined)
+        # invalid if contains invalid queries
         link_to_be_examined = parsed.query
         for other in invalid_queries:
             if other in link_to_be_examined:
                 return False
 
-        # AF - url contains a fragment
+        # url contains a fragment
         link_to_be_examined = parsed.fragment
         if bool(link_to_be_examined):
             return False
