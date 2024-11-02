@@ -54,16 +54,14 @@ def extract_next_links(url, resp, file):
 
     # Split webpage text content into words and check word count
     webpage_text = soup.get_text().split()
-    if len(webpage_text) < word_minimum:
-        return new_urls
+    if len(webpage_text) > word_minimum:
+        # Log the page's URL and text content
+        url_order += 1
+        file.write(f"URL{url_order}: {url}\n{' '.join(webpage_text)}\n\n")
 
     # Update global max word count if this page has more text
     if len(webpage_text) > current_max[0]:
         current_max = (len(webpage_text), url)
-
-    # Log the page's URL and text content
-    url_order += 1
-    file.write(f"URL{url_order}: {url}\n{' '.join(webpage_text)}\n\n")
 
     # Extract valid URLs from anchor tags
     for link in soup.find_all('a', href=True):
@@ -85,8 +83,12 @@ def is_valid(url):
     """
     
     # only add valid links to frontier as per assignment details
-    valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
-
+    valid_netlocs = ['.ics.uci.edu', '/ics.uci.edu', 'w.ics.uci.edu']
+    valid_netlocs.extend(['.cs.uci.edu', '/cs.uci.edu', 'w.cs.uci.edu'])
+    valid_netlocs.extend(['.informatics.uci.edu', '/informatics.uci.edu', 'w.informatics.uci.edu'])
+    valid_netlocs.extend(['.stat.uci.edu', '/stat.uci.edu', 'w.stat.uci.edu'])
+    valid_netlocs.extend(['.today.uci.edu/department/information_computer_sciences/','today.uci.edu/department/information_computer_sciences/','w.today.uci.edu/department/information_computer_sciences/'])
+    
     # blacklist (traps)
     wics_events = "/wics.ics.uci.edu/events"
     undergrad = "/ics.uci.edu/events/category/undergraduate-programs"
