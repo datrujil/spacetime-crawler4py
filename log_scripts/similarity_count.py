@@ -1,6 +1,6 @@
 import re
 
-output_file_path = "similarity_count.txt"  # Keep this as a string for the file path
+output_file_path = "similarity_count.txt"
 
 def load_fingerprints(filename):
     fingerprints = []
