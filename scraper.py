@@ -44,7 +44,7 @@ def extract_next_links(url, resp, file):
 
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
-    # Check for low information or undesired content types
+    # Check for undesired content types
     try:
         content_type = resp.raw_response.headers.get('Content-Type', '').lower()
         if content_type == "application/pdf" or content_type == "image/jpeg":
