@@ -83,13 +83,10 @@ def is_valid(url):
     """
     
     # only add valid links to frontier as per assignment details
-    valid_netlocs = ['.ics.uci.edu', '/ics.uci.edu', 'w.ics.uci.edu']
-    valid_netlocs.extend(['.cs.uci.edu', '/cs.uci.edu', 'w.cs.uci.edu'])
-    valid_netlocs.extend(['.informatics.uci.edu', '/informatics.uci.edu', 'w.informatics.uci.edu'])
-    valid_netlocs.extend(['.stat.uci.edu', '/stat.uci.edu', 'w.stat.uci.edu'])
-    valid_netlocs.extend(['.today.uci.edu/department/information_computer_sciences/','today.uci.edu/department/information_computer_sciences/','w.today.uci.edu/department/information_computer_sciences/'])
+    valid_netlocs = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu/department/information_computer_sciences']
+
     
-    # blacklist (traps)
+    # blacklist
     wics_events = "/wics.ics.uci.edu/events"
     undergrad = "/ics.uci.edu/events/category/undergraduate-programs"
     cecs = "https://www.cecs.uci.edu/events"
@@ -97,6 +94,13 @@ def is_valid(url):
     ics_events = "/ics.uci.edu/events"
     ics_cat = "/ics.uci.edu/events"
     isg = "/isg.ics.uci.edu/events"
+    physics = "physics.uci.edu"
+    cecs = "cecs.uci.edu"
+    eecs = "eecs.uci.edu"
+    nacs = "nacs.uci.edu"
+    linguistics = "linguistics.uci.edu"
+    statistics = "statistics.uci.edu"
+    economics = "economics.uci.edu"
 
     # other problematic
     pdf = "/pdf"
@@ -106,7 +110,7 @@ def is_valid(url):
     py = ".py"
     webp = ".webp"
 
-    blacklist = [wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, pdf, ppsx, odc, nb, py, webp]
+    blacklist = [wics_events, undergrad, cecs, cecs_list, ics_events, ics_cat, isg, pdf, ppsx, odc, nb, py, webp, physics, cecs, eecs, nacs, linguistics, statistics, economics]
 
     # errors in the domain
     your_ip_one = "[YOUR_IP]"
@@ -141,7 +145,7 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]):
             return False
         
-        # check blacklist (avoiding urls that lead to calendars)
+        # check blacklist (avoiding bad urls)
         for blacklisted_url in blacklist:
             if blacklisted_url in url:
                 return False
